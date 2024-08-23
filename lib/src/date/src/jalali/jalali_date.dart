@@ -573,7 +573,10 @@ class Jalali implements Date, Comparable<Jalali> {
             runtimeType == other.runtimeType &&
             year == other.year &&
             month == other.month &&
-            day == other.day;
+            day == other.day &&
+            hour == other.hour &&
+            minute == other.minute &&
+            second == other.second;
   }
 
   /// hashCode operator
@@ -581,7 +584,8 @@ class Jalali implements Date, Comparable<Jalali> {
   /// non-null
   @override
   int get hashCode {
-    return year.hashCode ^ month.hashCode ^ day.hashCode;
+    return year.hashCode ^ month.hashCode ^ day.hashCode
+    ^ hour.hashCode ^ minute.hashCode ^ second.hashCode;
   }
 }
 
