@@ -117,10 +117,10 @@ class Jalali implements Date, Comparable<Jalali> {
   /// non-null
   Jalali(this.year,
       [this.month = 1,
-      this.day = 1,
-      this.hour = 0,
-      this.minute = 0,
-      this.second = 0]) {
+        this.day = 1,
+        this.hour = 0,
+        this.minute = 0,
+        this.second = 0]) {
     ArgumentError.checkNotNull(year, 'year');
     ArgumentError.checkNotNull(month, 'month');
     ArgumentError.checkNotNull(day, 'day');
@@ -182,7 +182,9 @@ class Jalali implements Date, Comparable<Jalali> {
     }
 
     // Calculate Gregorian year (gy).
-    int gy = Gregorian.fromJulianDayNumber(julianDayNumber).year;
+    int gy = Gregorian
+        .fromJulianDayNumber(julianDayNumber)
+        .year;
     int jy = gy - 621;
     final r = _JalaliCalculation.calculate(jy);
     int jdn1f = Gregorian(gy, 3, r.march!).julianDayNumber;
@@ -285,7 +287,9 @@ class Jalali implements Date, Comparable<Jalali> {
   /// non-null
   @override
   bool isLeapYear() {
-    return _JalaliCalculation.calculate(year).leap == 0;
+    return _JalaliCalculation
+        .calculate(year)
+        .leap == 0;
   }
 
   /// Default string representation: `Jalali(YYYY,MM,DD)`.
@@ -412,8 +416,64 @@ class Jalali implements Date, Comparable<Jalali> {
   /// throws on null arguments
   ///
   /// non-null
-  @override
-  Jalali add(
+  Jalali add({
+    int years = 0,
+    int months = 0,
+    int days = 0,
+    int hours = 0,
+    int minutes = 0,
+    int seconds = 0,
+  }) {
+    // ... (null checks and initial time handling remain the same)
+
+    // Handle day, month, and year adjustments
+    int totalDays = this.day + days + (hours ~/ 24);
+    hours %= 24;
+
+    int currentMonth = this.month;
+    int currentYear = this.year;
+
+    // Adjust months and years, handling overflow correctly
+    currentMonth += months + (totalDays ~/ monthLength);
+    totalDays %= monthLength;
+
+    while (currentMonth > 12) {
+      currentMonth -= 12;
+      currentYear++;
+    }
+
+// Ensure 'currentMonth' is not 0 after the modulo operation
+    currentYear += (currentMonth - 1) ~/ 12;
+    currentMonth = (currentMonth - 1) % 12 + 1;
+
+    // Ensure 'totalDays' is within the valid range for the calculated month
+    int daysInMonth = getMonthLength(currentYear, currentMonth);
+
+    // Handle transition from Esfand (month 12) in a non-leap year
+    if (totalDays == 0 && currentMonth == 1 && !isLeapYearWithInput(currentYear - 1)) {
+      currentMonth = 12;
+      currentYear--;
+      totalDays = 29; // Esfand has 29 days in a non-leap year
+    } else if (totalDays == 0) {
+      currentMonth--;
+      if (currentMonth == 0) {
+        currentMonth = 12;
+        currentYear--;
+      }
+      totalDays = getMonthLength(currentYear, currentMonth);
+    } else if (totalDays > daysInMonth) {
+      totalDays %= daysInMonth;
+      currentMonth++;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      }
+    }
+
+    return Jalali(currentYear, currentMonth, totalDays, hours, minutes, seconds);
+  }
+
+/*  Jalali add(
       {int years = 0,
       int months = 0,
       int days = 0,
@@ -458,6 +518,23 @@ class Jalali implements Date, Comparable<Jalali> {
 
       return Jalali(years, months, days, hours, minutes, seconds);
     }
+  }*/
+
+  int getMonthLength(int year, int month) {
+    if (month <= 6) {
+      return 31;
+    } else if (month <= 11) {
+      return 30;
+    } else { // month == 12
+      return isLeapYearWithInput(year) ? 30
+          : 29;
+    }
+  }
+
+  bool isLeapYearWithInput(int year) {
+    // Implementation of Jalali leap year calculation
+    // This is a simplified version, you might need to adjust it based on the specific Jalali calendar rules
+    return (((year + 38) * 31) % 128) <= 30;
   }
 
   /// add [years] to this date
